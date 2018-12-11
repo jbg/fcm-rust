@@ -10,7 +10,7 @@ use hyper::{
     Request,
     StatusCode,
     Body,
-    client::{Client as HttpClient, HttpConnector},
+    client::Client as HttpClient,
 };
 use http::{
     header::{AUTHORIZATION, CONTENT_TYPE, CONTENT_LENGTH, RETRY_AFTER},
@@ -23,11 +23,10 @@ use futures::{
 };
 
 use message::Message;
-use hyper_tls::{self, HttpsConnector};
 use serde_json;
 
-pub struct Client {
-    http_client: HttpClient<HttpsConnector<HttpConnector>>,
+pub struct Client<C> {
+    http_client: HttpClient<C>,
 }
 
 pub struct FutureResponse(Box<Future<Item=FcmResponse, Error=FcmError> + 'static + Send>);
@@ -47,15 +46,14 @@ impl Future for FutureResponse {
     }
 }
 
-impl Client {
+impl<C: 'static> Client<C> where C: hyper::client::connect::Connect {
     /// Get a new instance of Client.
-    pub fn new() -> Result<Client, hyper_tls::Error> {
+    pub fn new(connector: C) -> Client<C> {
         let mut http_client = HttpClient::builder();
         http_client.keep_alive(true);
-
-        Ok(Client {
-            http_client: http_client.build(HttpsConnector::new(4).unwrap()),
-        })
+        Client {
+            http_client: http_client.build(connector),
+        }
     }
 
     pub fn send(&self, message: Message) -> FutureResponse {
