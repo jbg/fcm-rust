@@ -144,6 +144,14 @@ pub enum FcmError {
     ServerError(Option<RetryAfter>),
 }
 
+impl std::fmt::Display for FcmError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl std::error::Error for FcmError {}
+
 #[derive(PartialEq, Debug)]
 pub enum RetryAfter {
     /// Amount of time to wait until retrying the message is allowed.
