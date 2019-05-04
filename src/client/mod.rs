@@ -3,8 +3,15 @@ pub mod response;
 pub use client::response::*;
 pub use tokio_service::Service;
 
-use std::{
-    fmt,
+use std::future::Future;
+
+use futures::{
+    compat::{Future01CompatExt, Stream01CompatExt},
+    future::{ok, err, FutureExt, TryFutureExt},
+    stream::TryStreamExt,
+};
+use http::{
+    header::{AUTHORIZATION, CONTENT_TYPE, CONTENT_LENGTH, RETRY_AFTER},
 };
 use hyper::{
     Request,
@@ -12,38 +19,13 @@ use hyper::{
     Body,
     client::Client as HttpClient,
 };
-use http::{
-    header::{AUTHORIZATION, CONTENT_TYPE, CONTENT_LENGTH, RETRY_AFTER},
-};
-use futures::{
-    Future,
-    Poll,
-    future::{ok, err},
-    stream::Stream,
-};
 
 use message::Message;
 use serde_json;
 
+
 pub struct Client<C> {
     http_client: HttpClient<C>,
-}
-
-pub struct FutureResponse(Box<Future<Item=FcmResponse, Error=FcmError> + 'static + Send>);
-
-impl fmt::Debug for FutureResponse {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.pad("Future<FcmResponse>")
-    }
-}
-
-impl Future for FutureResponse {
-    type Item = FcmResponse;
-    type Error = FcmError;
-
-    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
-        self.0.poll()
-    }
 }
 
 impl<C: 'static> Client<C> where C: hyper::client::connect::Connect {
@@ -56,7 +38,7 @@ impl<C: 'static> Client<C> where C: hyper::client::connect::Connect {
         }
     }
 
-    pub fn send(&self, message: Message) -> FutureResponse {
+    pub fn send(&self, message: Message) -> impl Future<Output = Result<FcmResponse, FcmError>> {
         let payload = serde_json::to_vec(&message.body).unwrap();
 
         let mut builder = Request::builder();
@@ -72,6 +54,7 @@ impl<C: 'static> Client<C> where C: hyper::client::connect::Connect {
         let send_request = self
             .http_client
             .request(request)
+            .compat()
             .map_err(|_| response::FcmError::ServerError(None));
 
         let fcm_f = send_request.and_then(move |response| {
@@ -83,10 +66,9 @@ impl<C: 'static> Client<C> where C: hyper::client::connect::Connect {
 
             response
                 .into_body()
-                .map_err(|_| {
-                    response::FcmError::ServerError(None)
-                })
-                .concat2()
+                .compat()
+                .map_err(|_| FcmError::ServerError(None))
+                .try_concat()
                 .and_then(move |body_chunk| {
                     if let Ok(body) = String::from_utf8(body_chunk.to_vec()) {
                         match response_status {
@@ -117,6 +99,6 @@ impl<C: 'static> Client<C> where C: hyper::client::connect::Connect {
                 })
         });
 
-        FutureResponse(Box::new(fcm_f))
+        fcm_f.boxed()
     }
 }
