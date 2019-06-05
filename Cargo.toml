@@ -8,15 +8,14 @@ repository = "https://github.com/jbg/fcm-rust"
 keywords = ["fcm", "firebase", "cloud", "messaging", "tokio"]
 
 [dependencies]
+chrono = "0.4"
+erased-serde = "0.3"
+futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
+reqwest = { version = "0.9.17", default-features = false, features = ["rustls-tls", "trust-dns"] }
 serde = "1.0"
 serde_json = "1.0"
-erased-serde = "0.3"
 serde_derive = "1.0"
-futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
 tokio-service = "0.1"
-hyper = "0.12"
-http = "0.1"
-chrono = "0.4"
 
 [dev-dependencies]
 argparse = "0.2.1"

@@ -10,57 +10,44 @@ use futures::{
     future::{ok, err, FutureExt, TryFutureExt},
     stream::TryStreamExt,
 };
-use http::{
-    header::{AUTHORIZATION, CONTENT_TYPE, CONTENT_LENGTH, RETRY_AFTER},
-};
-use hyper::{
-    Request,
-    StatusCode,
-    Body,
-    client::Client as HttpClient,
-};
+use reqwest::{r#async::Client as HttpClient, StatusCode};
 
 use message::Message;
 use serde_json;
 
 
-pub struct Client<C> {
-    http_client: HttpClient<C>,
+pub struct Client {
+    http_client: HttpClient,
 }
 
-impl<C: 'static> Client<C> where C: hyper::client::connect::Connect {
+impl Client {
     /// Get a new instance of Client.
-    pub fn new(connector: C) -> Client<C> {
-        let mut http_client = HttpClient::builder();
-        http_client.keep_alive(true);
-        Client {
-            http_client: http_client.build(connector),
-        }
+    pub fn new() -> Client {
+        let http_client = HttpClient::builder()
+            .use_rustls_tls()
+            .build()
+            .unwrap();
+        Client { http_client, }
     }
 
     pub fn send(&self, message: Message) -> impl Future<Output = Result<FcmResponse, FcmError>> {
         let payload = serde_json::to_vec(&message.body).unwrap();
 
-        let mut builder = Request::builder();
+        let req = self.http_client
+            .post("https://fcm.googleapis.com/fcm/send")
+            .header("content-type", "application/json; encoding=utf-8")
+            .header("content-length", format!("{}", payload.len() as u64))
+            .header("authorization", format!("key={}", message.api_key).as_bytes())
+            .body(payload);
 
-        builder.method("POST");
-        builder.header(CONTENT_TYPE, "application/json");
-        builder.header(CONTENT_LENGTH, format!("{}", payload.len() as u64).as_bytes());
-        builder.header(AUTHORIZATION, format!("key={}", message.api_key).as_bytes());
-        builder.uri("https://fcm.googleapis.com/fcm/send");
-
-        let request = builder.body(Body::from(payload)).unwrap();
-
-        let send_request = self
-            .http_client
-            .request(request)
+        let send_request = req.send()
             .compat()
             .map_err(|_| response::FcmError::ServerError(None));
 
         let fcm_f = send_request.and_then(move |response| {
             let response_status = response.status().clone();
             let retry_after = response.headers()
-                .get(RETRY_AFTER)
+                .get("retry-after")
                 .and_then(|ra| ra.to_str().ok())
                 .and_then(|ra| RetryAfter::from_str(ra));
 

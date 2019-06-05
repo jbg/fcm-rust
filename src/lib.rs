@@ -82,17 +82,15 @@
 //! ```
 
 #[allow(unused_imports)]
-#[macro_use]
-extern crate serde_json;
 
-#[macro_use] extern crate serde_derive;
-extern crate serde;
-extern crate erased_serde;
-extern crate hyper;
-extern crate http;
-extern crate futures;
-extern crate tokio_service;
 extern crate chrono;
+extern crate erased_serde;
+extern crate futures;
+extern crate reqwest;
+extern crate serde;
+#[macro_use] extern crate serde_derive;
+extern crate serde_json;
+extern crate tokio_service;
 
 mod message;
 pub use message::*;
