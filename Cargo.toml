@@ -11,7 +11,7 @@ keywords = ["fcm", "firebase", "cloud", "messaging", "tokio"]
 chrono = "0.4"
 erased-serde = "0.3"
 futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
-reqwest = { version = "0.9.17", default-features = false, features = ["rustls-tls", "trust-dns"] }
+reqwest = { version = "0.9.17", default-features = false, features = ["rustls-tls"] }
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
