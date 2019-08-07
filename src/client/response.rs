@@ -1,4 +1,6 @@
 pub use chrono::{DateTime, FixedOffset, Duration};
+use serde::Deserialize;
+
 
 /// A description of what went wrong with the push notification.
 /// Referred from [Firebase documentation](https://firebase.google.com/docs/cloud-messaging/http-server-ref#table9)

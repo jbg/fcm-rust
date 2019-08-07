@@ -1,3 +1,4 @@
+#![feature(async_await)]
 #![doc(html_root_url = "https://panicbit.github.io/fcm-rust/fcm/")]
 //! fcm
 //! ===
@@ -9,9 +10,6 @@
 //! To send out a FCM Message with some custom data:
 //!
 //! ```no_run
-//! # extern crate fcm;
-//! # extern crate futures;
-//! # extern crate tokio;
 //! # use std::collections::HashMap;
 //! # use futures::{future::lazy, Future};
 //! # fn main() {
@@ -40,7 +38,6 @@
 //! To send a message using FCM Notifications, we first build the notification:
 //!
 //! ```rust
-//! # extern crate fcm;
 //! # fn main() {
 //! let mut builder = fcm::NotificationBuilder::new();
 //! builder.title("Hey!");
@@ -52,9 +49,6 @@
 //! And then set it in the message, before sending it:
 //!
 //! ```no_run
-//! # extern crate fcm;
-//! # extern crate futures;
-//! # extern crate tokio;
 //! # use futures::{future::lazy, Future};
 //! # fn main() {
 //! let client = fcm::Client::new().unwrap();
@@ -82,15 +76,6 @@
 //! ```
 
 #[allow(unused_imports)]
-
-extern crate chrono;
-extern crate erased_serde;
-extern crate futures;
-extern crate reqwest;
-extern crate serde;
-#[macro_use] extern crate serde_derive;
-extern crate serde_json;
-extern crate tokio_service;
 
 mod message;
 pub use message::*;

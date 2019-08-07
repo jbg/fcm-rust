@@ -1,5 +1,8 @@
 use std::borrow::Cow;
 
+use serde::Serialize;
+
+
 #[cfg(test)]
 mod tests;
 

@@ -1,10 +1,14 @@
 #[cfg(test)]
 mod tests;
 
-use notification::Notification;
-use erased_serde::Serialize;
-use serde_json::{self, Value};
 use std::borrow::Cow;
+
+use erased_serde::Serialize as ErasedSerialize;
+use serde::Serialize;
+use serde_json::{self, Value};
+
+use crate::notification::Notification;
+
 
 #[derive(Serialize, PartialEq, Debug)]
 #[serde(rename_all = "lowercase")]
@@ -195,7 +199,7 @@ impl<'a> MessageBuilder<'a> {
     /// builder.data(&map);
     /// let message = builder.finalize();
     /// ```
-    pub fn data(&mut self, data: &dyn Serialize) -> Result<&mut Self, serde_json::Error> {
+    pub fn data(&mut self, data: &dyn ErasedSerialize) -> Result<&mut Self, serde_json::Error> {
         self.data = Some(serde_json::to_value(data)?);
         Ok(self)
     }
