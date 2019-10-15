@@ -1,4 +1,3 @@
-#![feature(async_await)]
 #![doc(html_root_url = "https://panicbit.github.io/fcm-rust/fcm/")]
 //! fcm
 //! ===

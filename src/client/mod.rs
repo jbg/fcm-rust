@@ -1,7 +1,6 @@
 pub mod response;
 
 use futures::{
-    compat::{Future01CompatExt, Stream01CompatExt},
     future::TryFutureExt,
     stream::TryStreamExt,
 };
@@ -36,7 +35,6 @@ impl<T: Connect + 'static> Client<T> {
             .map_err(|_| response::FcmError::InvalidMessage("Can't build HTTP request".to_string()))?;
 
         let response = self.http_client.request(req)
-            .compat()
             .map_err(|_| response::FcmError::ServerError(None))
             .await?;
 
@@ -48,7 +46,6 @@ impl<T: Connect + 'static> Client<T> {
 
         let body_chunk = response
             .into_body()
-            .compat()
             .map_err(|_| FcmError::ServerError(None))
             .try_concat()
             .await?;
