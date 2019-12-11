@@ -1,23 +1,33 @@
 pub mod response;
 
-use futures::{
-    future::TryFutureExt,
-    stream::TryStreamExt,
-};
-use hyper::{client::connect::Connect, Request, StatusCode};
-pub use tokio_service::Service;
+use bytes::buf::BufExt;
+use futures::future::TryFutureExt;
+use hyper::{Body, client::connect::Connection, Request, service::Service, StatusCode, Uri};
+use tokio::io::{AsyncRead, AsyncWrite};
 
 pub use crate::client::response::*;
 use crate::message::Message;
 
 
-pub struct Client<T: Connect + 'static> {
-    http_client: hyper::Client<T>,
+pub struct Client<S>
+where
+    S: Service<Uri> + Clone + Send + Sync + 'static,
+    S::Response: Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
+{
+    http_client: hyper::Client<S, Body>,
 }
 
-impl<T: Connect + 'static> Client<T> {
+impl<S> Client<S>
+where
+    S: Service<Uri> + Clone + Send + Sync + 'static,
+    S::Response: Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
+{
     /// Get a new instance of Client.
-    pub fn new(http_client: hyper::Client<T>) -> Client<T> {
+    pub fn new(http_client: hyper::Client<S, Body>) -> Client<S> {
         Client { http_client }
     }
 
@@ -44,18 +54,11 @@ impl<T: Connect + 'static> Client<T> {
             .and_then(|ra| ra.to_str().ok())
             .and_then(|ra| RetryAfter::from_str(ra));
 
-        let body_chunk = response
-            .into_body()
-            .map_err(|_| FcmError::ServerError(None))
-            .try_concat()
-            .await?;
-
-        let body = String::from_utf8(body_chunk.to_vec())
-            .map_err(|_| response::FcmError::InvalidMessage("Unknown Error".to_string()))?;
-
         match response_status {
             StatusCode::OK => {
-                let fcm_response: FcmResponse = serde_json::from_str(&body)
+                let body_buf = hyper::body::aggregate(response.into_body()).await
+                    .map_err(|_| response::FcmError::InvalidMessage("Failed to read response".to_string()))?;
+                let fcm_response: FcmResponse = serde_json::from_reader(body_buf.reader())
                     .map_err(|_| response::FcmError::InvalidMessage("Unknown Error".to_string()))?;
                 match fcm_response.error {
                     Some(ErrorReason::Unavailable) =>

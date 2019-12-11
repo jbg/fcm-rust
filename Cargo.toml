@@ -9,14 +9,14 @@ keywords = ["fcm", "firebase", "cloud", "messaging", "tokio"]
 edition = "2018"
 
 [dependencies]
+bytes = "0.5.2"
 chrono = "0.4"
 erased-serde = "0.3"
-futures-preview = "0.3.0-alpha.19"
-hyper = { version = "0.13.0-alpha.4", features = ["nightly", "unstable-stream"] }
+futures = "0.3.1"
+hyper = "0.13.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio-service = "0.1"
+tokio = "0.2.4"
 
 [dev-dependencies]
 argparse = "0.2.1"
-tokio = "0.2.0-alpha.6"
