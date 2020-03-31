@@ -3,9 +3,6 @@ use std::borrow::Cow;
 use serde::Serialize;
 
 
-#[cfg(test)]
-mod tests;
-
 /// This struct represents a FCM notification. Use the 
 /// corresponding `NotificationBuilder` to get an instance. You can then use 
 /// this notification instance when sending a FCM message.
@@ -49,17 +46,6 @@ pub struct Notification<'a> {
 }
 
 /// A builder to get a `Notification` instance.
-///
-/// # Examples
-///
-/// ```rust
-/// use fcm::NotificationBuilder;
-///
-/// let mut builder = NotificationBuilder::new();
-//  builder.title("Australia vs New Zealand");
-/// builder.body("3 runs to win in 1 ball");
-/// let notification = builder.finalize();
-/// ```
 pub struct NotificationBuilder<'a> {
     title: Option<&'a str>,
     body: Option<&'a str>,

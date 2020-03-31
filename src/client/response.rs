@@ -181,7 +181,7 @@ impl RetryAfter {
 mod tests {
     use super::*;
     use chrono::{DateTime, Duration};
-    use serde_json;
+    use serde_json::json;
 
     #[test]
     fn test_some_errors() {

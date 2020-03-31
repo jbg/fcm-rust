@@ -1,6 +1,3 @@
-#[cfg(test)]
-mod tests;
-
 use std::borrow::Cow;
 
 use erased_serde::Serialize as ErasedSerialize;
@@ -53,14 +50,6 @@ pub struct MessageBody<'a> {
 
 /// Represents a FCM message. Construct the FCM message
 /// using various utility methods and finally send it.
-/// # Examples:
-/// ```rust
-/// use fcm::MessageBuilder;
-///
-/// let mut builder = MessageBuilder::new("<FCM API Key>", "<registration id>");
-/// builder.dry_run(true);
-/// let message = builder.finalize();
-/// ```
 #[derive(Debug)]
 pub struct Message<'a> {
     pub api_key: &'a str,
@@ -69,16 +58,6 @@ pub struct Message<'a> {
 
 ///
 /// A builder to get a `Message` instance.
-///
-/// # Examples
-///
-/// ```rust
-/// use fcm::MessageBuilder;
-///
-/// let mut builder = MessageBuilder::new("<FCM API Key>", "<registration id>");
-/// builder.dry_run(true);
-/// let message = builder.finalize();
-/// ```
 #[derive(Debug)]
 pub struct MessageBuilder<'a> {
     api_key: &'a str,
@@ -139,14 +118,6 @@ impl<'a> MessageBuilder<'a> {
     }
 
     /// Set the priority of the message. You can set Normal or High priorities.
-    /// # Examples:
-    /// ```rust
-    /// use fcm::{MessageBuilder, Priority};
-    ///
-    /// let mut builder = MessageBuilder::new("<FCM API Key>", "<registration id>");
-    /// builder.priority(Priority::High);
-    /// let message = builder.finalize();
-    /// ```
     pub fn priority(&mut self, priority: Priority) -> &mut Self {
         self.priority = Some(priority);
         self
@@ -186,38 +157,12 @@ impl<'a> MessageBuilder<'a> {
     /// Use this to add custom key-value pairs to the message. This data
     /// must be handled appropriately on the client end. The data can be
     /// anything that Serde can serialize to JSON.
-    ///
-    /// # Examples:
-    /// ```rust
-    /// use fcm::MessageBuilder;
-    /// use std::collections::HashMap;
-    ///
-    /// let mut map = HashMap::new();
-    /// map.insert("message", "Howdy!");
-    ///
-    /// let mut builder = MessageBuilder::new("<FCM API Key>", "<registration id>");
-    /// builder.data(&map);
-    /// let message = builder.finalize();
-    /// ```
     pub fn data(&mut self, data: &dyn ErasedSerialize) -> Result<&mut Self, serde_json::Error> {
         self.data = Some(serde_json::to_value(data)?);
         Ok(self)
     }
 
     /// Use this to set a `Notification` for the message.
-    /// # Examples:
-    /// ```rust
-    /// use fcm::{MessageBuilder, NotificationBuilder};
-    ///
-    /// let mut builder = NotificationBuilder::new();
-    /// builder.title("Hey!");
-    /// builder.body("Do you want to catch up later?");
-    /// let notification = builder.finalize();
-    /// 
-    /// let mut builder = MessageBuilder::new("<FCM API Key>", "<registration id>");
-    /// builder.notification(notification);
-    /// let message = builder.finalize();
-    /// ```
     pub fn notification(&mut self, notification: Notification<'a>) -> &mut Self {
         self.notification = Some(notification);
         self
